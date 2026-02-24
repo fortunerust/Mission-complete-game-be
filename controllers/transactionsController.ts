@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import Transaction from '../models/Transaction';
+import { Types } from 'mongoose';
 
-export const createTransaction = async (user: string, type: string, totalCost: number, txSignature: string) => {
+export const createTransaction = async (user: string, type: string, totalCost: number, txSignature: string): Promise<Types.ObjectId> => {
   try {
     const tx = await Transaction.create({
       user,

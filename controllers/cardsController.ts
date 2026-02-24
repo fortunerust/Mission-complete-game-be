@@ -1,33 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import User from '../models/User';
 import Card from '../models/Card';
 import { CardType } from '../types';  
 
 const toCardShape = (c: CardType | null) =>
   c ? { _id: c._id, name: c.name, value: c.value, type: c.type, imageBg: c.imageBg, imageItem: c.imageItem, stats: c.stats } : null;
-
-export const getCards = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const { wallet } = req.query;
-    if (!wallet) {
-      res.status(400).json({ error: 'wallet query is required' });
-      return;
-    }
-    const user = await User.findOne({ wallet: String(wallet).trim() })
-      .populate('cardsInUse')
-      .populate('cardsPurchased')
-      .lean();
-    if (!user) {
-      res.json({ inUse: [], purchased: [] });
-      return;
-    }
-    const inUse = (user.cardsInUse || []).map((c: unknown) => toCardShape(c as Parameters<typeof toCardShape>[0])).filter(Boolean);
-    const purchased = (user.cardsPurchased || []).map((c: unknown) => toCardShape(c as Parameters<typeof toCardShape>[0])).filter(Boolean);
-    res.json({ inUse, purchased });
-  } catch (err) {
-    next(err);
-  }
-};
 
 export const listCards = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {

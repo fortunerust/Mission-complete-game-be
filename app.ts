@@ -7,8 +7,8 @@ const app = express();
 
 app.use(cors({
   origin: [
-    'https://look-maxxing-game-frontend.vercel.app',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://look-maxxing-game-frontend.vercel.app'
   ],
   credentials: true
 }));
