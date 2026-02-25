@@ -59,6 +59,7 @@ export const purchasePacks = async (req: Request, res: Response): Promise<void> 
   }
 
   const cardHistory: CardHistoryType[] = [];
+  const cardHistoryIds: unknown[] = [];
 
   for (let i = 0; i < qty; i++) {
     const physique = pickPhysiqueTier();
@@ -69,9 +70,16 @@ export const purchasePacks = async (req: Request, res: Response): Promise<void> 
         cardId: card._id,
         action: 'purchase',
       });
-      cardHistory.push(cardHistoryEntry);
+      cardHistoryIds.push(cardHistoryEntry._id);
     }
   }
+
+  // Populate card information for all created card history entries
+  const populatedCardHistory = await CardHistory.find({
+    _id: { $in: cardHistoryIds },
+  }).populate('cardId');
+  
+  cardHistory.push(...populatedCardHistory);
 
   userDoc.packs += qty;
   await userDoc.save();

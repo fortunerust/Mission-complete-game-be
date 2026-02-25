@@ -28,7 +28,7 @@ export async function completeExpiredGamesForWallet(wallet: string): Promise<{ c
   }).lean();
 
   const completed: GameHistoryType[] = [];
-
+  
   for (const game of expired) {
     try {
       const exp = randomExp();
@@ -40,17 +40,21 @@ export async function completeExpiredGamesForWallet(wallet: string): Promise<{ c
           await User.findByIdAndUpdate(game.player, { $set: { level: levelFromExp } });
         }
       }
-      const updatedGame = await GameHistory.findByIdAndUpdate(game._id, {
-        gameStation: 'completed',
-        completedAt: now,
-        expAwarded: exp,
-      }).lean();
+      const updatedGame = await GameHistory.findByIdAndUpdate(
+        game._id,
+        {
+          gameStation: 'completed',
+          completedAt: now,
+          expAwarded: exp,
+        },
+        { new: true } // Return the updated document, not the original
+      ).lean();
       if (updatedGame) completed.push(updatedGame as GameHistoryType);
     } catch (err) {
       console.error('Error completing expired game:', err);
     }
   }
-
+  
   const user = await User.findById(userDoc._id).lean();
   return { completed, user: (user ?? {}) as UserType };
 }

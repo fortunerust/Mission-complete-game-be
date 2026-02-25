@@ -10,5 +10,7 @@ export interface GameHistoryType {
   startTime: Date;
   endTime: Date;
   completedAt?: Date;
+  tokenReward: number;
+  claimedToken: boolean;
   expAwarded?: number;
 }

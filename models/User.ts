@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     packs: { type: Number, default: 0 },
     experience: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
+    purchasedCharacters: { type: [mongoose.Schema.Types.ObjectId], ref: 'Character', default: [new mongoose.Types.ObjectId("699c35593e749844da50e126")] },
   },
   { timestamps: true }
 );

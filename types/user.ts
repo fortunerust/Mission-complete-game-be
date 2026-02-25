@@ -9,4 +9,5 @@ export interface UserType {
   packs: number;
   experience: number;
   level: number;
+  purchasedCharacters: Types.ObjectId[];
 }

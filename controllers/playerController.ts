@@ -16,6 +16,7 @@ interface PlayerResponse {
   packs: number;
   experience: number;
   level: number;
+  purchasedCharacters: mongoose.Types.ObjectId[];
 }
 
 function toPlayerResponse(user: mongoose.Document & {
@@ -28,6 +29,7 @@ function toPlayerResponse(user: mongoose.Document & {
   packs?: number;
   experience?: number;
   level?: number;
+  purchasedCharacters?: mongoose.Types.ObjectId[];
 }): PlayerResponse {
   const map = user.mapId && typeof user.mapId === 'object' && !(user.mapId instanceof mongoose.Types.ObjectId)
     ? (user.mapId as Record<string, unknown>)
@@ -52,6 +54,7 @@ function toPlayerResponse(user: mongoose.Document & {
     packs: user.packs ?? 0,
     experience: user.experience ?? 0,
     level: user.level ?? 1,
+    purchasedCharacters: user.purchasedCharacters ?? [],
   };
 }
 

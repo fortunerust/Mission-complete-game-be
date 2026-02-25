@@ -4,4 +4,5 @@ export interface CharacterType{
     imageSrc: string;
     level: number;
     order: number;
+    price: number;
 }

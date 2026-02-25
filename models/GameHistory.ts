@@ -9,6 +9,8 @@ const gameHistorySchema = new mongoose.Schema(
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     completedAt: { type: Date },
+    tokenReward: { type: Number, required: true, default: 0 },
+    claimedToken: { type: Boolean, required: true, default: false },
     expAwarded: { type: Number },
   },
   { timestamps: true }

@@ -3,11 +3,16 @@ import GameHistory from '../models/GameHistory';
 import User from '../models/User';
 import Mission from '../models/Mission';
 import { completeExpiredGamesForWallet } from '../services/gameHistoryService';
+import { claimTokensForWallet } from '../services/tokenClaimService';
 
-/** Parse "2 HRS" / "1 HR" to hours number. */
+/** Parse "2 HRS" / "1 HR" / "0.005 HRS" to hours number (supports decimals including values < 1). */
 function parseDurationHours(duration: string): number {
-  const match = String(duration).match(/^(\d+)\s*HR(?:S)?$/i);
-  return match ? Math.max(1, parseInt(match[1], 10)) : 2;
+  const match = String(duration).match(/^(\d+(?:\.\d+)?)\s*HR(?:S)?$/i);
+  if (match) {
+    const hours = parseFloat(match[1]);
+    return hours > 0 ? hours : 2; // Ensure positive value, default to 2 if 0 or negative
+  }
+  return 2;
 }
 
 /** List in-progress (and optionally recent completed) game history for a player by wallet. Returns only the latest record per mission. */
@@ -74,6 +79,8 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
       player: user._id,
       missionId,
       gameStation: 'in_progress',
+      tokenReward: mission.yield,
+      claimedToken: false,
       startTime,
       endTime,
     });
@@ -94,6 +101,62 @@ export const getRecentCompletions = async (req: Request, res: Response, next: Ne
     }
     const { completed, user } = await completeExpiredGamesForWallet(wallet);
     res.json({ completed, user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** GET claimable tokens info (total unclaimed tokens and latest endTime if in-progress). */
+export const getClaimableInfo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { wallet } = req.query;
+    if (!wallet || typeof wallet !== 'string') {
+      res.status(400).json({ error: 'wallet query is required' });
+      return;
+    }
+    const user = await User.findOne({ wallet: wallet.trim() }).select('_id').lean();
+    if (!user) {
+      res.json({ totalClaimable: 0, latestEndTime: null, hasInProgress: false });
+      return;
+    }
+
+    // Get unclaimed completed missions
+    const unclaimed = await GameHistory.find({
+      player: user._id,
+      claimedToken: false,
+    }).lean();
+
+    const totalClaimable = unclaimed.reduce((sum, game) => sum + (game.tokenReward ?? 0), 0);
+
+    // Get latest in-progress mission endTime
+    const inProgress = await GameHistory.findOne({
+      player: user._id,
+      gameStation: 'in_progress',
+    })
+      .sort({ endTime: -1 })
+      .lean();
+
+    res.json({
+      totalClaimable,
+      latestEndTime: inProgress?.endTime ? new Date(inProgress.endTime).toISOString() : null,
+      hasInProgress: !!inProgress,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** POST claim tokens - transfers tokens from backend wallet to user wallet. */
+export const claimTokens = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { wallet } = req.body;
+    if (!wallet || typeof wallet !== 'string') {
+      res.status(400).json({ error: 'wallet is required' });
+      return;
+    }
+
+    const result = await claimTokensForWallet(wallet.trim());
+    res.json(result);
   } catch (err) {
     next(err);
   }
