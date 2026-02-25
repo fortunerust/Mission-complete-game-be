@@ -36,7 +36,8 @@ export async function completeExpiredGamesForWallet(wallet: string): Promise<{ c
       const updatedUser = await User.findById(game.player).select('experience level').lean();
       if (updatedUser) {
         const levelFromExp = Math.floor((updatedUser.experience ?? 0) / 1000) + 1;
-        if ((updatedUser.level ?? 1) > levelFromExp) {
+        console.log("🚀 ~ completeExpiredGamesForWallet ~ levelFromExp:", levelFromExp)
+        if ((updatedUser.level ?? 1) < levelFromExp) {
           await User.findByIdAndUpdate(game.player, { $set: { level: levelFromExp } });
         }
       }
